@@ -8,7 +8,12 @@ from sklearn.pipeline import Pipeline
 import sklearn
 sklearn.set_config(transform_output="pandas")  #says pass pandas tables through pipeline instead of numpy matrices
 
+# Custom Imports to make multiple files work together
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 # My custom library
 from customDropColumnsTransformer import CustomDropColumnsTransformer
-from customColumnSelector import CustomColumnSelector
+from customMapingTransformer import CustomMappingTransformer
 from customOHETransformer import CustomOHETransformer
