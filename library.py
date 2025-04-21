@@ -347,7 +347,6 @@ class CustomSigma3Transformer(BaseEstimator, TransformerMixin):
         self.low_wall = None
 
         assert isinstance(target_column, str), f'expected str but got {type(target_column)} instead.'
-        assert target_column in transformed_df.columns.to_list(), f'unknown column {target_column}'
 
     def fit(self, X, y=None):
         """
