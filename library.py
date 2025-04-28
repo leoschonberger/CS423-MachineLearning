@@ -605,10 +605,10 @@ titanic_transformer = Pipeline(steps=[
     ('joined', CustomOHETransformer('Joined')),
     
     # CH4
-    ('fare', CustomTukeyTransformer(target_column='Fare', fence='outer')),
+    # ('fare', CustomTukeyTransformer(target_column='Fare', fence='outer')),
 
     # CH6
-    ('age', CustomTukeyTransformer(target_column='Age', fence='outer')),
+    # ('age', CustomTukeyTransformer(target_column='Age', fence='outer')),
 
     # Robust transform Age and Fare
     ('age robust', CustomRobustTransformer('Age')),
