@@ -495,6 +495,168 @@ class CustomTukeyTransformer(BaseEstimator, TransformerMixin):
         self.fit(X_copy, y)
         return self.transform(X_copy, y)
 
+
+    """Applies robust scaling to a specified column in a pandas DataFrame.
+    This transformer calculates the interquartile range (IQR) and median
+    during the `fit` method and then uses these values to scale the
+    target column in the `transform` method.
+
+    Parameters
+    ----------
+    column : str
+        The name of the column to be scaled.
+
+    Attributes
+    ----------
+    target_column : str
+        The name of the column to be scaled.
+    iqr : float
+        The interquartile range of the target column.
+    med : float
+        The median of the target column.
+  """
+    def __init__(self, column):
+        self.target_column = column
+        self.iqr = None
+        self.med = None
+        self.bin = None # is binary column?
+
+    def fit(self, X, y=None):
+        if self.target_column not in X.columns:
+            raise ValueError(f"CustomRobustTransformer.fit unrecognizable column {self.target_column}")
+
+        # Check if the column is binary
+        if X[self.target_column].nunique() <= 2 and X[self.target_column].isin([0, 1]).all():
+            # If binary, skip scaling (set iqr and med to None or special values)
+            self.bin = True
+            return self
+
+        else:
+            # If not binary, proceed with normal scaling
+            self.iqr = X[self.target_column].quantile(0.75) - X[self.target_column].quantile(0.25)
+            self.med = X[self.target_column].median()
+            return self
+
+    def transform(self, X, y=None):
+      # If the column is binary
+        if self.bin == True:
+            return X
+
+        # Otherwise check condition
+        if self.iqr is None or self.med is None:
+            raise AssertionError("This CustomRobustTransformer instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator.")
+
+        # If the column isn't binary, do transform
+        X[self.target_column] = (X[self.target_column] - self.med) / self.iqr
+        return X
+
+    def fit_transform(self, X, y=None):
+        self.fit(X)
+        return self.transform(X)
+
+class CustomRobustTransformer(BaseEstimator, TransformerMixin):
+    """
+    Applies robust scaling to a specified column in a pandas DataFrame.
+
+    This transformer calculates the interquartile range (IQR) and median
+    during the `fit` method and then uses these values to scale the
+    target column in the `transform` method. Handles binary columns
+    gracefully by skipping scaling for them.
+
+    Parameters
+    ----------
+    column : str
+        The name of the column to be scaled.
+
+    Attributes
+    ----------
+    target_column : str
+        The name of the column to be scaled.
+    iqr : float or None
+        The interquartile range of the target column. None if the column is binary.
+    med : float or None
+        The median of the target column. None if the column is binary.
+    bin : bool
+        Flag indicating if the column is binary.
+    """
+    def __init__(self, column: str):
+        self.target_column = column
+        self.iqr = None
+        self.med = None
+        self.bin = None
+
+    def fit(self, X: pd.DataFrame, y=None) -> 'CustomRobustTransformer':
+        """
+        Computes the IQR and median of the target column.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        self : CustomRobustTransformer
+            The fitted transformer.
+        """
+        if self.target_column not in X.columns:
+            raise ValueError(f"CustomRobustTransformer.fit: Unrecognized column '{self.target_column}'")
+
+        # Check if the column is binary
+        if X[self.target_column].nunique() <= 2 and X[self.target_column].isin([0, 1]).all():
+            self.bin = True
+            return self
+        else:
+            self.iqr = X[self.target_column].quantile(0.75) - X[self.target_column].quantile(0.25)
+            self.med = X[self.target_column].median()
+            return self
+
+    def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
+        """
+        Applies robust scaling to the target column.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        pd.DataFrame
+            The DataFrame with the scaled column.
+        """
+        if self.bin:
+            return X
+
+        if self.iqr is None or self.med is None:
+            raise AssertionError("This CustomRobustTransformer instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator.")
+
+        X[self.target_column] = (X[self.target_column] - self.med) / self.iqr
+        return X
+
+    def fit_transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
+        """
+        Fits the transformer and applies robust scaling to the target column.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame.
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        pd.DataFrame
+            The DataFrame with the scaled column.
+        """
+        self.fit(X)
+        return self.transform(X)
+
 # Custom Pipelines
 titanic_transformer = Pipeline(steps=[
     ('gender', CustomMappingTransformer('Gender', {'Male': 0, 'Female': 1})),
@@ -514,5 +676,8 @@ customer_transformer = Pipeline(steps=[
     ('isp', CustomOHETransformer('ISP')),
     #CH4
     ('time spent', CustomTukeyTransformer('Time Spent', 'inner')),
+    #CH5
+    ('time spent robust', CustomRobustTransformer('Time Spent')),
+    ('age', CustomRobustTransformer('Age')),
 
     ], verbose=True)
