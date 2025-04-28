@@ -607,6 +607,9 @@ titanic_transformer = Pipeline(steps=[
     # CH4
     ('fare', CustomTukeyTransformer(target_column='Fare', fence='outer')),
 
+    # CH6
+    ('age', CustomTukeyTransformer(target_column='Age', fence='outer')),
+
     ], verbose=True)
 
 customer_transformer = Pipeline(steps=[
