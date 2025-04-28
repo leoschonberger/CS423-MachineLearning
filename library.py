@@ -4,6 +4,7 @@ import numpy as np
 import types
 from typing import Dict, Any, Optional, Union, List, Set, Hashable, Literal, Tuple, Self, Iterable
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.impute import KNNImputer
 from sklearn.pipeline import Pipeline
 import sklearn
 import warnings
@@ -598,21 +599,112 @@ class CustomRobustTransformer(BaseEstimator, TransformerMixin):
         self.fit(X)
         return self.transform(X)
 
+class CustomKNNTransformer(BaseEstimator, TransformerMixin):
+    """
+    Imputes missing values using KNN.
+
+    This transformer wraps the KNNImputer from scikit-learn and hard-codes
+    add_indicator to be False. It also ensures that the input and output
+    are pandas DataFrames.
+
+    Parameters
+    ----------
+    n_neighbors : int, default=5
+        Number of neighboring samples to use for imputation.
+    weights : {'uniform', 'distance'}, default='uniform'
+        Weight function used in prediction. Possible values:
+        "uniform" : uniform weights. All points in each neighborhood
+        are weighted equally.
+        "distance" : weight points by the inverse of their distance.
+        In this case, closer neighbors of a query point will have a
+        greater influence than neighbors which are further away.
+    """
+
+    def __init__(self, n_neighbors: int = 5, weights: str = 'uniform'):
+        self.n_neighbors = n_neighbors
+        self.weights = weights
+        self.knn_imputer = KNNImputer(
+            n_neighbors=n_neighbors,
+            weights=weights,
+            add_indicator=False
+        )
+
+    def fit(self, X: pd.DataFrame, y=None) -> Self:
+        """
+        Fit the KNN imputer on the input DataFrame.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame to fit the imputer on.
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        self : CustomKNNTransformer
+            The fitted transformer.
+        """
+        self.knn_imputer.fit(X, y)
+        return self
+
+    def transform(self, X: pd.DataFrame) -> pd.DataFrame:
+        """
+        Transform the input DataFrame by imputing missing values.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame to transform.
+
+        Returns
+        -------
+        pd.DataFrame
+            The DataFrame with missing values imputed.
+        """
+        if not hasattr(self, 'knn_imputer'):
+            raise ValueError(
+                "This CustomKNNTransformer instance is not fitted yet. "
+                "Call 'fit' with appropriate arguments before using this estimator."
+            )
+
+        X_imputed = self.knn_imputer.transform(X)
+        return pd.DataFrame(X_imputed, columns=X.columns)
+
+    def fit_transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
+        """
+        Fit the KNN imputer on the input DataFrame and transform it.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The input DataFrame to fit and transform.
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        pd.DataFrame
+            The DataFrame with missing values imputed.
+        """
+        return self.fit(X, y).transform(X)
+
+
 # Custom Pipelines
 titanic_transformer = Pipeline(steps=[
     ('gender', CustomMappingTransformer('Gender', {'Male': 0, 'Female': 1})),
     ('class', CustomMappingTransformer('Class', {'Crew': 0, 'C3': 1, 'C2': 2, 'C1': 3})),
     ('joined', CustomOHETransformer('Joined')),
     
-    # CH4
     # ('fare', CustomTukeyTransformer(target_column='Fare', fence='outer')),
-
-    # CH6
     # ('age', CustomTukeyTransformer(target_column='Age', fence='outer')),
 
     # Robust transform Age and Fare
     ('age robust', CustomRobustTransformer('Age')),
     ('fare robust', CustomRobustTransformer('Fare')),
+
+    # Not 100% sure this is needed yet
+    ('imputer', CustomKNNTransformer(n_neighbors=5, weights='distance')),
 
     ], verbose=True)
 
@@ -622,10 +714,15 @@ customer_transformer = Pipeline(steps=[
     ('experience', CustomMappingTransformer('Experience Level', {'low': 0, 'medium': 1, 'high': 2})),
     ('os', CustomOHETransformer('OS')),
     ('isp', CustomOHETransformer('ISP')),
+    
     #CH4
     ('time spent', CustomTukeyTransformer('Time Spent', 'inner')),
+    
     #CH5
     ('time spent robust', CustomRobustTransformer('Time Spent')),
     ('age', CustomRobustTransformer('Age')),
+    
+    #CH6
+    ('imputer', CustomKNNTransformer(n_neighbors=5, weights='distance')),
 
     ], verbose=True)
