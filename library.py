@@ -704,7 +704,7 @@ titanic_transformer = Pipeline(steps=[
     ('fare robust', CustomRobustTransformer('Fare')),
 
     # Not 100% sure this is needed yet
-    ('imputer', CustomKNNTransformer(n_neighbors=5, weights='distance')),
+    # ('imputer', CustomKNNTransformer(n_neighbors=5, weights='distance')),
 
     ], verbose=True)
 
