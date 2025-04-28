@@ -610,6 +610,10 @@ titanic_transformer = Pipeline(steps=[
     # CH6
     ('age', CustomTukeyTransformer(target_column='Age', fence='outer')),
 
+    # Robust transform Age and Fare
+    ('age robust', CustomRobustTransformer('Age')),
+    ('fare robust', CustomRobustTransformer('Fare')),
+
     ], verbose=True)
 
 customer_transformer = Pipeline(steps=[
