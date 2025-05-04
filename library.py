@@ -521,8 +521,8 @@ class CustomRobustTransformer(BaseEstimator, TransformerMixin):
     bin : bool
         Flag indicating if the column is binary.
     """
-    def __init__(self, column: str):
-        self.target_column = column
+    def __init__(self, target_column: str):
+        self.target_column = target_column
         self.iqr = None
         self.med = None
         self.bin = None
@@ -696,26 +696,32 @@ titanic_transformer = Pipeline(steps=[
     ('class', CustomMappingTransformer('Class', {'Crew': 0, 'C3': 1, 'C2': 2, 'C1': 3})),
     ('joined', CustomOHETransformer('Joined')),
     
-    # ('fare', CustomTukeyTransformer(target_column='Fare', fence='outer')),
-    # ('age', CustomTukeyTransformer(target_column='Age', fence='outer')),
+    # 
+    ('age', CustomTukeyTransformer(target_column='Age', fence='outer')),
+    ('fare', CustomTukeyTransformer(target_column='Fare', fence='outer')),
 
     # Robust transform Age and Fare
     ('age robust', CustomRobustTransformer('Age')),
     ('fare robust', CustomRobustTransformer('Fare')),
 
-    # Not 100% sure this is needed yet
-    # ('imputer', CustomKNNTransformer(n_neighbors=5, weights='distance')),
+
+    ('imputer', CustomKNNTransformer(n_neighbors=5, weights='distance')),
 
     ], verbose=True)
 
 customer_transformer = Pipeline(steps=[
+    # Drop ID column
     ('drop', CustomDropColumnsTransformer(['ID'], 'drop')),
+
+    # Map gender to 0 and 1, and experience to 0,1,2
     ('gender', CustomMappingTransformer('Gender', {'Male': 0, 'Female': 1})),
     ('experience', CustomMappingTransformer('Experience Level', {'low': 0, 'medium': 1, 'high': 2})),
+
+    # Convert categorical columns to one-hot encoding
     ('os', CustomOHETransformer('OS')),
     ('isp', CustomOHETransformer('ISP')),
     
-    #CH4
+    #CH4: 
     ('time spent', CustomTukeyTransformer('Time Spent', 'inner')),
     
     #CH5
