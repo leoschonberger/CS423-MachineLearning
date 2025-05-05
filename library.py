@@ -4,7 +4,6 @@ import numpy as np
 import types
 from typing import Dict, Any, Optional, Union, List, Set, Hashable, Literal, Tuple, Self, Iterable
 
-import category_encoders as ce
 from sklearn.preprocessing import _encoders
 from feature_engine.encoding import MeanEncoder
 from sklearn.metrics import f1_score
