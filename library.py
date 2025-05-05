@@ -3,11 +3,27 @@ import pandas as pd
 import numpy as np
 import types
 from typing import Dict, Any, Optional, Union, List, Set, Hashable, Literal, Tuple, Self, Iterable
+
+import category_encoders as ce
+from sklearn.preprocessing import _encoders
+from feature_engine.encoding import MeanEncoder
+from sklearn.metrics import f1_score
+from sklearn.neighbors import KNeighborsClassifier
+
+
+
+import sklearn
+
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import KNNImputer
 from sklearn.pipeline import Pipeline
-import sklearn
+from sklearn.model_selection import train_test_split
+
+
+
 import warnings
+
+
 sklearn.set_config(transform_output="pandas")  #says pass pandas tables through pipeline instead of numpy matrices
 
 # State Variables (Chapter 7)
