@@ -5,7 +5,7 @@ import types
 from typing import Dict, Any, Optional, Union, List, Set, Hashable, Literal, Tuple, Self, Iterable
 
 from sklearn.preprocessing import _encoders
-from feature_engine.encoding import MeanEncoder
+# from feature_engine.encoding import MeanEncoder
 from sklearn.metrics import f1_score
 from sklearn.neighbors import KNeighborsClassifier
 
