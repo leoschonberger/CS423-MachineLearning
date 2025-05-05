@@ -469,7 +469,7 @@ class CustomTukeyTransformer(BaseEstimator, TransformerMixin):
         q3 = X[self.target_column].quantile(0.75)
         iqr = q3 - q1
 
-        print(f'Fence: {self.fence}')
+        # print(f'Fence: {self.fence}')
 
         if self.fence == 'inner':
             self.inner_low = q1 - 1.5 * iqr
@@ -595,6 +595,10 @@ class CustomRobustTransformer(BaseEstimator, TransformerMixin):
 
         if self.iqr is None or self.med is None:
             raise AssertionError("This CustomRobustTransformer instance is not fitted yet. Call 'fit' with appropriate arguments before using this estimator.")
+        
+        if self.iqr < 1e-10:
+            raise ValueError(f"CustomRobustTransformer.transform: IQR is too small for column '{self.target_column}'")
+        
 
         X[self.target_column] = (X[self.target_column] - self.med) / self.iqr
         return X
