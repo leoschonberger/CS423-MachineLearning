@@ -11,6 +11,8 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import KNNImputer
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegressionCV
+from sklearn.model_selection import ParameterGrid
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score, roc_auc_score 
 from sklearn.neighbors import KNeighborsClassifier
 sklearn.set_config(transform_output="pandas")  #says pass pandas tables through pipeline instead of numpy matrices
@@ -893,6 +895,35 @@ def threshold_results(thresh_list, actuals, predicted):
     fancy_df = result_df.style.highlight_max(color = 'pink', axis = 0).format(precision=2).set_properties(**properties).set_table_styles([headers])
     return (result_df, fancy_df)
 
+# Chapter 11 Functions:
+def halving_search(model, grid, x_train, y_train, factor=2, min_resources="exhaust", scoring='roc_auc'):
+    #your code below
+    halving_cv = HalvingGridSearchCV(
+        model, grid,  #our model and the parameter combos we want to try
+        scoring=scoring,  #from chapter
+        n_jobs=-1,  #use all available cpus
+        factor=factor,  #double samples and take top half of combos on each iteration
+        cv=5, random_state=1234,
+        refit=True,
+        min_resources=min_resources,
+    )
+    grid_result = halving_cv.fit(x_train, y_train)
+    return grid_result
+
+
+def sort_grid(grid):
+    #sorts both keys and values
+    # Defensive Copy
+    sorted_grid = grid.copy()
+
+    #sort values - note that this will expand range for you
+    for k,v in sorted_grid.items():
+        sorted_grid[k] = sorted(sorted_grid[k], key=lambda x: (x is None, x))  #handles cases where None is an alternative value
+
+    #sort keys
+    sorted_grid = dict(sorted(sorted_grid.items()))
+
+    return sorted_grid
 
 # Custom Pipelines
 titanic_transformer = Pipeline(steps=[
